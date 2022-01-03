@@ -5,7 +5,6 @@ import time
 import argparse
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
-import random
 
 img_rate = 0.8
 
@@ -98,7 +97,7 @@ def text_overlapping(screen, text, pos, size, color, center=True):
     return output
 
 
-def main(game_num = '1'):
+def main_loop(game_num = '1'):
 
     model = posenet.load_model(args.model)
     try:
@@ -182,10 +181,15 @@ def main(game_num = '1'):
 
         cv2.namedWindow('posenet')
         cv2.moveWindow('posenet', 40, 30)
-        cv2.imshow('posenet', fliped_image)
+        ret, jpeg = cv2.imencode('.jpg', fliped_image)
+        frame = jpeg.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+        # cv2.imshow('posenet', fliped_image)
         if cv2.waitKey(1) & 0xFF == ord('0'):
             break
     
+
 
     time_start = time.time()
     score = 0
@@ -195,13 +199,12 @@ def main(game_num = '1'):
 
     # 중간에 웜홀 이미지 추가
     
-    
+
     while True:
-        while(True):
+        while True:
             try:
                 input_image, display_image, output_scale = posenet.read_cap(
                     cap, scale_factor=args.scale_factor, output_stride=output_stride)
-                
                 break
             except:
                 cap = cv2.VideoCapture(args.cam_id)
@@ -209,7 +212,6 @@ def main(game_num = '1'):
                 cap.set(4, args.cam_height)
                 time.sleep(0.1)
                 pass
-        
         
 
         display_iamge = cv2.resize(display_image, dsize = (0,0), fx = rate, fy = rate)
@@ -244,6 +246,8 @@ def main(game_num = '1'):
         display_image = cv2.resize(display_image, dsize=(640,480))
 
         # Game Part ( modify only here !!!!!!! ) #####################################
+        
+
         ######################################################
         # Game 1 (Catching star) #############################
         ######################################################
@@ -260,7 +264,7 @@ def main(game_num = '1'):
                                                             args.draw_skel)
             
             goal_score = 10
-            goal_time = 10
+            goal_time = 30
 
             if touched:
                 score += 1
@@ -295,7 +299,7 @@ def main(game_num = '1'):
                 score_txt = "{}/{}".format(score, goal_score)
                 time_txt = "{}:{}".format(int(time.time()-time_start), int((time.time()-time_start)*100)%100)
                 while True:
-                    while(True):
+                    while True:
                         try:
                             input_image, display_image, output_scale = posenet.read_cap(
                                 cap, scale_factor=args.scale_factor, output_stride=output_stride)
@@ -323,8 +327,11 @@ def main(game_num = '1'):
                     
                     # fliped_image = cv2.putText(fliped_image, "Success", (250, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
                     # fliped_image = cv2.putText(fliped_image, "Press 0 to go to Game Menu" , (40, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
-
-                    cv2.imshow('posenet', fliped_image)
+                    ret, jpeg = cv2.imencode('.jpg', fliped_image)
+                    frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                    # cv2.imshow('posenet', fliped_image)
                     if cv2.waitKey(1) & 0xFF == ord('0'):
                         return
             elif goal_time < time.time()-time_start:
@@ -358,8 +365,11 @@ def main(game_num = '1'):
                     fliped_image = text_overlapping(fliped_image, time_txt, (int(325),int(305)), 32 ,(255,255,255), False)
                     # fliped_image = cv2.putText(fliped_image, "Failed", (250, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
                     # fliped_image = cv2.putText(fliped_image, "Press 0 to go to Game Menu" , (40, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
-
-                    cv2.imshow('posenet', fliped_image)
+                    ret, jpeg = cv2.imencode('.jpg', fliped_image)
+                    frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                    # cv2.imshow('posenet', fliped_image)
                     if cv2.waitKey(1) & 0xFF == ord('0'):
                         return
 
@@ -448,8 +458,11 @@ def main(game_num = '1'):
                     # fliped_image = cv2.putText(fliped_image, "Success", (250, 120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
                     # fliped_image = cv2.putText(fliped_image, success_time , (250, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
                     # fliped_image = cv2.putText(fliped_image, "Press 0 to go to Game Menu" , (40, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
-
-                    cv2.imshow('posenet', fliped_image)
+                    ret, jpeg = cv2.imencode('.jpg', fliped_image)
+                    frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                    # cv2.imshow('posenet', fliped_image)
                     if cv2.waitKey(1) & 0xFF == ord('0'):
                         return
 
@@ -471,10 +484,10 @@ def main(game_num = '1'):
             frame_perf = cv2.imread(resource_path("jangjorim_games/image/Frame 155.png"), cv2.IMREAD_UNCHANGED)
             frame_perf = cv2.resize(frame_perf, dsize=(int(189*img_rate),int(31*img_rate)))
 
-            height,width = display_image.shape[0], display_image.shape[1] 
+            height = display_image.shape[0]
             hit_range = [
-                ("Perfect", int(height/2-height/20), int(height/2+height/20) ,frame_perf),
-                ("Great", int(height/2-height/8), int(height/2+height/8) ,frame_great),
+                ("Perfect", int(height/2-height/20), int(height/2+height/20), frame_perf),
+                ("Great", int(height/2-height/8), int(height/2+height/8), frame_great),
                 ("Bad", int(height/2-height/2), int(height/2+height/2), frame_bad)
             ]
 
@@ -504,10 +517,7 @@ def main(game_num = '1'):
             fliped_image = cv2.resize(fliped_image, dsize=(640,480))
 
             # 기준선 
-            try:
-                fliped_image = cv2.line(fliped_image, (width-target[0]-50,int(height/2)),(width-target[0],int(height/2)),(0,0,255),6)
-            except:
-                pass
+            fliped_image = cv2.line(fliped_image, (50,int(height/2)),(100,int(height/2)),(0,0,255),6)
             
             # Score function
             #score board frame
@@ -538,45 +548,6 @@ def main(game_num = '1'):
             fliped_image = image_overlapping(fliped_image, frame_time, (int(20*img_rate),int(625*img_rate)))
             time_txt = "{}:{}".format(int(time.time()-time_start), int((time.time()-time_start)*100)%100)
             fliped_image = text_overlapping(fliped_image, time_txt, (int((625+155/2)*img_rate),int((20+50/2)*img_rate)), 65 ,(255,255,255))
-
-
-            if score == jangjorim_games.game3.num_of_target:
-                success_time = "Time : " + str(round(time.time() - time_start,2))
-                score_txt = "{}".format(score, jangjorim_games.game2.num_of_target)
-                time_txt = "{}:{}".format(int(time.time()-time_start), int((time.time()-time_start)*100)%100)
-                while True:
-                    while(True):
-                        try:
-                            input_image, display_image, output_scale = posenet.read_cap(
-                                cap, scale_factor=args.scale_factor, output_stride=output_stride)
-                            break
-                        except:
-                            cap = cv2.VideoCapture(args.cam_id)
-                            cap.set(3, args.cam_width)
-                            cap.set(4, args.cam_height)
-                            time.sleep(0.1)
-                            pass
-
-                    fliped_image = cv2.flip(display_image, 1)
-                    fliped_iamge = cv2.resize(fliped_image, dsize = (0,0), fx = rate, fy = rate)
-                    fliped_image = fliped_image[0:480 ,0:640]
-                    fliped_image = cv2.resize(fliped_image, dsize=(640,480))
-
-                    # success image frame
-                    frame_game = cv2.imread(resource_path("jangjorim_games/image/Frame 186.png"), cv2.IMREAD_UNCHANGED)
-                    frame_game = cv2.resize(frame_game, dsize=(int(442),int(303)))
-                    fliped_image = image_overlapping(fliped_image, frame_game, (int(80),int(99)))
-                    # score
-                    fliped_image = text_overlapping(fliped_image, score_txt, (int(325),int(272)), 32 ,(255,255,255), False)
-                    # time
-                    fliped_image = text_overlapping(fliped_image, time_txt, (int(325),int(305)), 32 ,(255,255,255), False)
-                    # fliped_image = cv2.putText(fliped_image, "Success", (250, 120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
-                    # fliped_image = cv2.putText(fliped_image, success_time , (250, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
-                    # fliped_image = cv2.putText(fliped_image, "Press 0 to go to Game Menu" , (40, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
-
-                    cv2.imshow('posenet', fliped_image)
-                    if cv2.waitKey(1) & 0xFF == ord('0'):
-                        return
 
         ######################################################  
         # Game 3 #############################################
@@ -668,8 +639,11 @@ def main(game_num = '1'):
                     fliped_image = text_overlapping(fliped_image, time_txt, (int(325),int(305)), 32 ,(255,255,255), False)
                     # fliped_image = cv2.putText(fliped_image, "Success", (250, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
                     # fliped_image = cv2.putText(fliped_image, "Press 0 to go to Game Menu" , (40, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
-
-                    cv2.imshow('posenet', fliped_image)
+                    ret, jpeg = cv2.imencode('.jpg', fliped_image)
+                    frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                    # cv2.imshow('posenet', fliped_image)
                     if cv2.waitKey(1) & 0xFF == ord('0'):
                         return
             elif goal_time < time.time()-time_start:
@@ -702,8 +676,11 @@ def main(game_num = '1'):
                     fliped_image = text_overlapping(fliped_image, time_txt, (int(325),int(305)), 32 ,(255,255,255), False)
                     # fliped_image = cv2.putText(fliped_image, "Failed", (250, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 3)
                     # fliped_image = cv2.putText(fliped_image, "Press 0 to go to Game Menu" , (40, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3)
-
-                    cv2.imshow('posenet', fliped_image)
+                    ret, jpeg = cv2.imencode('.jpg', fliped_image)
+                    frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                    # cv2.imshow('posenet', fliped_image)
                     if cv2.waitKey(1) & 0xFF == ord('0'):
                         return
 
@@ -804,9 +781,9 @@ def main(game_num = '1'):
             # 높이를 480으로 고정하기 위한 작업
             h,w,_ = fliped_image.shape
             # image upsampling
-            mid_img = cv2.imread(resource_path("jangjorim_games/image/wormhole.png"), cv2.IMREAD_UNCHANGED)
+            mid_img = cv2.imread(resource_path("jangjorim_games/image/Frame 167.png"), cv2.IMREAD_UNCHANGED)
             mid_img = mid_img[:,:,:3]
-            mid_img = cv2.resize(mid_img, dsize = (mid_img.shape[1] * h / mid_img.shape[0],h))
+            mid_img = cv2.resize(mid_img, dsize = (mid_img.shape[1],h))
             frame = cv2.resize(frame, dsize=(w,h), interpolation=cv2.INTER_CUBIC)
 
 
@@ -849,7 +826,11 @@ def main(game_num = '1'):
         # cv2.imshow('posenet', fliped_image)
         cv2.namedWindow('posenet')
         cv2.moveWindow('posenet', 40, 30)
-        cv2.imshow('posenet', fliped_image)
+        ret, jpeg = cv2.imencode('.jpg', fliped_image)
+        frame = jpeg.tobytes()
+        yield (b'--frame\r\n'
+            b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+        # cv2.imshow('posenet', fliped_image)
         frame_count += 1
         if cv2.waitKey(1) & 0xFF == ord('0'):
             return
@@ -857,19 +838,22 @@ def main(game_num = '1'):
     print('Average FPS: ', frame_count / (time.time() - start))
 
 
-if __name__ == "__main__":
+def start_loop():
+    print(2)
     try:
+        print(3)
         # sound_park = resource_path("jangjorim_games/sound/park.mp3")
         # sound_park = sound_park.replace(" ", "%20")
         # playsound(sound_park, block= False)
         skel_draw = input("Do you want to draw skeleton? Y/N")
 
-        if skel_draw == 'Y' or skel_draw == 'y':
+        if skel_draw == 'Y':
             args.draw_skel = True
         else:
             args.draw_skel = False
 
-        HOST = input("Insert IP please : ")
+        # HOST = input("Insert IP please : ")
+        HOST = "127.0.0.1"
 
         # jumple 시작 화면 
         start_jumple = time.time()
@@ -882,7 +866,11 @@ if __name__ == "__main__":
         
         cv2.namedWindow('posenet')
         cv2.moveWindow('posenet', 40, 30)
-        cv2.imshow('posenet', blank_img)
+        ret, jpeg = cv2.imencode('.jpg', blank_image)
+        frame = jpeg.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+        # cv2.imshow('posenet', blank_img)
 
         key = cv2.waitKey(4000)
         time.sleep(0.1)
@@ -918,7 +906,11 @@ if __name__ == "__main__":
             time.sleep(0.1)
             cv2.namedWindow('posenet')
             cv2.moveWindow('posenet', 40, 30)
-            cv2.imshow('posenet', blank_img)
+            ret, jpeg = cv2.imencode('.jpg', blank_image)
+            frame = jpeg.tobytes()
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+            # cv2.imshow('posenet', blank_img)
 
             game_type = None
             while True:
@@ -960,7 +952,11 @@ if __name__ == "__main__":
                     time.sleep(0.1)
                     cv2.namedWindow('posenet')
                     cv2.moveWindow('posenet', 40, 30)
-                    cv2.imshow('posenet', blank_img)
+                    ret, jpeg = cv2.imencode('.jpg', blank_image)
+                    frame = jpeg.tobytes()
+                    yield (b'--frame\r\n'
+                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+                    # cv2.imshow('posenet', blank_img)
                     while True:
                         key = cv2.waitKey()
                         if key is not None:
@@ -970,7 +966,7 @@ if __name__ == "__main__":
                 if key == ord('q'):
                     raise getOutOfLoop
 
-            main(game_type)
+            main_loop(game_type)
     
     except getOutOfLoop:
         pass

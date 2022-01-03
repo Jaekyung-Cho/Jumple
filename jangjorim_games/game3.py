@@ -18,6 +18,8 @@ target_color = {
   "original" : (255,255,255)
 }
 
+num_of_target = 10
+
 # game explanation
 explain = "Try trapping volley ball at red line"
 
@@ -67,7 +69,8 @@ def touch_target(img, hand, elbow , target, hit_range, prev_touch, prev_touch_im
 
 def random_target(img, target, target_shape = "soccerball", color = "original"):
   if target is None:
-    target = (random.randint(img.shape[1]-150,img.shape[1]-80), 50, 0)
+    hit_pos = random.randint(0,img.shape[1]-51)
+    target = (hit_pos, 50, 0)
   else:
     target = (target[0], target[1]+ velocity, target[2]-velocity)
     if(target[1] > img.shape[0] - 50):
